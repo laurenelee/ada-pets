@@ -96,28 +96,40 @@ class PetsControllerTest < ActionDispatch::IntegrationTest
       # assert_difference "Pet.count", 1 do
       #   post pets_path, params: { pet: pet_data }
       #   assert_response :success
+
+      body = JSON.parse(response.body)
+      body.must_be_kind_of Hash
+      body.must_include "id"
+
+      # Check that the ID matches
+      Pet.find(body["id"]).name.must_equal pet_data[:name]
     end
 
-    #   body = JSON.parse(response.body)
-    #   body.must_be_kind_of Hash
-    #   body.must_include "id"
-    #
-    #   # Check that the ID matches
-    #   Pet.find(body["id"]).name.must_equal pet_data[:name]
-    # end
-    #
-    # it "Returns an error for an invalid pet" do
-    #   bad_data = pet_data.clone()
-    #   bad_data.delete(:name)
-    #   assert_no_difference "Pet.count" do
-    #     post pets_url, params: { pet: bad_data }
-    #     assert_response :bad_request
-    #   end
-    #
-    #   body = JSON.parse(response.body)
-    #   body.must_be_kind_of Hash
-    #   body.must_include "errors"
-    #   body["errors"].must_include "name"
+    it "Returns an error for an invalid pet" do
+      invalid_pet_data = {
+        age: 1,
+        human: "Jamie"
+      }
+      proc {
+        post pets_path, params: {pet: invalid_pet_data}
+      }.wont_change 'Pet.count'
+      must_respond_with :bad_request
+
+      body = JSON.parse(response.body)
+      body.must_be_kind_of Hash
+      body.must_equal "errors" => {"name" => ["can't be blank"]}
+
+      # another way
+      # body.must_include "errors"
+      # body["errors"].must_include "name"
+
+      # bad_data = pet_data.clone()
+      # bad_data.delete(:name)
+      # assert_no_difference "Pet.count" do
+      #   post pets_url, params: { pet: bad_data }
+      #   assert_response :bad_request
+      # end
+
+    end
   end
-# end
 end
